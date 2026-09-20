@@ -12,14 +12,13 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+import asyncio
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     logger.info("Initializing Kestrel Multi-Agent Research Assistant Backend...")
-    try:
-        count = run_ingestion()
-        logger.info(f"Startup check complete. Chroma vector store ready with {count} chunks.")
-    except Exception as e:
-        logger.error(f"Error during startup corpus ingestion: {e}")
+    # Schedule background ingestion so server binds port immediately
+    asyncio.create_task(asyncio.to_thread(run_ingestion))
     yield
     logger.info("Shutting down Kestrel Assistant Backend.")
 

@@ -49,8 +49,8 @@ class ChromaStoreManager:
                 "version": chunk["version"]
             })
 
-        # Add in batches of 100 to avoid potential memory limit issues
-        batch_size = 100
+        # Add in small batches of 16 to keep memory usage under 150MB on 512MB RAM cloud tiers
+        batch_size = 16
         for i in range(0, len(chunks), batch_size):
             collection.add(
                 ids=ids[i:i+batch_size],
