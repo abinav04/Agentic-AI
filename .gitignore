@@ -41,3 +41,8 @@ htmlcov/
 # Assignment HTML
 assignment.html
 
+# Streamlit Local Secrets
+.streamlit/secrets.toml
+!.streamlit/secrets.toml.example
+
+

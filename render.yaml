@@ -1,0 +1,23 @@
+services:
+  - type: web
+    name: kestrel-agentic-backend
+    env: python
+    region: oregon
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: GROQ_API_KEY
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: GROQ_MODEL
+        value: groq/compound-mini
+      - key: GEMINI_MODEL
+        value: gemini-3.6-flash
+      - key: LLM_PRIMARY_PROVIDER
+        value: groq
+      - key: LLM_FALLBACK_ENABLED
+        value: "true"
+      - key: EMBEDDING_MODEL_NAME
+        value: sentence-transformers/all-MiniLM-L6-v2

@@ -7,6 +7,16 @@ import re
 from app.config import settings
 from app.graph.workflow import KestrelResearchAssistantPipeline
 
+# Sync Streamlit Community Cloud secrets into os.environ
+try:
+    if hasattr(st, "secrets"):
+        for key, val in st.secrets.items():
+            if isinstance(val, str):
+                os.environ[key] = val
+except Exception:
+    pass
+
+
 # Page Config
 st.set_page_config(
     page_title="Kestrel Labs Research Assistant",
@@ -228,7 +238,8 @@ if prompt := st.chat_input("Ask a question about Kestrel documentation, specs, o
 
     with st.chat_message("assistant"):
         with st.spinner("Analyzing documentation with 4-agent LangGraph workflow..."):
-            api_url = f"{settings.FASTAPI_URL}/api/chat"
+            base_backend_url = os.getenv("FASTAPI_URL", settings.FASTAPI_URL).rstrip("/")
+            api_url = f"{base_backend_url}/api/chat"
             response_data = None
 
             try:
