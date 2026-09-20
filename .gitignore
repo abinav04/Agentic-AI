@@ -37,3 +37,7 @@ chroma_db/
 .pytest_cache/
 .coverage
 htmlcov/
+
+# Assignment HTML
+assignment.html
+
