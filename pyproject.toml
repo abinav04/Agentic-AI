@@ -1,0 +1,30 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "kestrel-research-assistant"
+version = "1.0.0"
+description = "Multi-agent research assistant for Kestrel Labs internal documentation using LangGraph, Chroma, Groq, Gemini, and FastAPI."
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "fastapi",
+    "uvicorn",
+    "pydantic",
+    "pydantic-settings",
+    "python-dotenv",
+    "langgraph",
+    "langchain",
+    "langchain-core",
+    "langchain-community",
+    "langchain-groq",
+    "langchain-google-genai",
+    "groq",
+    "google-genai",
+    "chromadb",
+    "sentence-transformers",
+    "streamlit",
+    "langsmith",
+    "httpx"
+]
