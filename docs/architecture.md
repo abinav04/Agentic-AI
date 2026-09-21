@@ -31,7 +31,7 @@ User / Streamlit UI
  │                 │ (Date-aware claim verification)                      │
  │                 ▼                                                      │
  │             Synthesizer Agent                                          │
- │                 │ (Grounded answer + Option A citations)                │
+ │                 │ (Grounded answer + Option A citations)               │
  │                 ▼                                                      │
  │                END                                                     │
  └────────────────────────────────────────────────────────────────────────┘
