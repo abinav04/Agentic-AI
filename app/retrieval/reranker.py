@@ -4,6 +4,8 @@ from typing import List, Dict, Any
 
 logger = logging.getLogger(__name__)
 
+# Helper function to extract and convert publication date strings into integer YYYYMMDD numbers.
+# Provides a clean numeric score representation used for calculating doc recency bonuses.
 def parse_published_date(date_str: str) -> int:
     """Converts published date string e.g. '20260203' to integer 20260203 for recency comparisons."""
     try:
@@ -14,6 +16,8 @@ def parse_published_date(date_str: str) -> int:
     except Exception:
         return 20200101
 
+# Function to rerank vector search retrieved chunks based on vector similarity, exact keywords, and date recency.
+# Filters duplicates and returns top-k highest scoring candidate context chunks.
 def rerank_chunks(
     query: str,
     chunks: List[Dict[str, Any]],
@@ -27,6 +31,8 @@ def rerank_chunks(
     # Deduplicate by chunk_id
     seen_ids = set()
     unique_chunks = []
+    # Loop over retrieved chunks to deduplicate items by unique chunk_id before scoring.
+    # Prevents duplicate documents from occupying top retrieval slots in context windows.
     for c in chunks:
         cid = c.get("chunk_id")
         if cid and cid not in seen_ids:
@@ -36,6 +42,8 @@ def rerank_chunks(
     query_words = set(re.findall(r"\w+", query.lower()))
 
     scored_chunks = []
+    # Loop over unique candidate chunks to calculate combined hybrid relevance and recency scores.
+    # Combines vector cosine score with keyword matching bonuses and publication date weighting.
     for chunk in unique_chunks:
         base_score = chunk.get("similarity_score", 0.5)
         text_lower = chunk.get("text", "").lower()

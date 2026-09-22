@@ -11,6 +11,8 @@ from app.config import settings
 
 logger = logging.getLogger(__name__)
 
+# Helper function to parse recommended wait duration from rate limit and quota API error text.
+# Returns calculated delay in seconds (with small padding) if retry instructions are found in message.
 def parse_retry_after_seconds(err_str: str) -> Optional[float]:
     """Parses Retry-After duration or suggested wait time from API error messages."""
     try:
@@ -27,6 +29,8 @@ def parse_retry_after_seconds(err_str: str) -> Optional[float]:
         pass
     return None
 
+# Resilience wrapper class for primary and secondary LLM providers with automatic fallback logic.
+# Implements exponential backoff, rate limit cooldowns, and seamless provider switching on error.
 class FallbackLLMProvider(BaseLLMProvider):
     """Production Fallback LLM Provider wrapper.
     Features:
@@ -37,6 +41,8 @@ class FallbackLLMProvider(BaseLLMProvider):
     - Immediate bypass on Daily Quota (TPD) exhaustion
     """
 
+    # Initializes fallback manager with primary provider preference and available provider instances.
+    # Sets up tracking state for cooldown timers, last used provider, and failure histories.
     def __init__(
         self,
         primary_name: Optional[str] = None,
@@ -53,16 +59,22 @@ class FallbackLLMProvider(BaseLLMProvider):
         self.last_error = None
         self._cooldowns = {}  # {provider_name: timestamp_until_cooldown_expires}
 
+    # Property returning the provider identifier string used in the most recent generation call.
+    # Helps callers identify whether primary or secondary provider handled the request.
     @property
     def provider_name(self) -> str:
         return self.last_provider_used
 
+    # Property returning the active model name of the provider currently selected for generation.
+    # Routes model name query to either groq or gemini instance depending on active provider state.
     @property
     def model_name(self) -> str:
         if self.last_provider_used == "groq":
             return self.groq.model_name
         return self.gemini.model_name
 
+    # Determines the ordered list of active providers based on priority preferences and cooldown status.
+    # Filters out providers currently on cooldown unless all providers are currently cooling down.
     def _get_provider_chain(self) -> List[Tuple[str, BaseLLMProvider]]:
         now = time.time()
         if self.primary_name == "gemini":
@@ -75,6 +87,8 @@ class FallbackLLMProvider(BaseLLMProvider):
 
         # Filter out providers currently on cooldown
         active_chain = []
+        # Loop through configured provider order to check if any provider is on active cooldown.
+        # Excludes temporarily blocked rate-limited providers from the active provider chain.
         for name, provider in order:
             cooldown_until = self._cooldowns.get(name, 0)
             if cooldown_until < now:
@@ -86,10 +100,14 @@ class FallbackLLMProvider(BaseLLMProvider):
         # If all providers are on cooldown, ignore cooldown and attempt all as last resort
         return active_chain if active_chain else order
 
+    # Registers a temporal cooldown block for a specified provider identifier.
+    # Prevents retrying rate-limited or quota-exhausted providers for the given duration.
     def _mark_cooldown(self, name: str, duration: float = 60.0):
         self._cooldowns[name] = time.time() + duration
         logger.warning(f"Provider '{name}' placed on cooldown for {duration:.0f}s due to rate limit/quota.")
 
+    # Checks whether an API error string indicates a transient failure like rate limit or timeout.
+    # Used to determine if retry backoff should be applied before switching providers.
     def _is_transient_error(self, err_str: str) -> bool:
         err_lower = err_str.lower()
         return any(term in err_lower for term in [
@@ -97,12 +115,16 @@ class FallbackLLMProvider(BaseLLMProvider):
             "high demand", "overloaded", "tpm", "tpd", "rpm"
         ])
 
+    # Checks if an error string explicitly signifies daily quota or token-per-day exhaustion.
+    # Immediately triggers extended cooldown blocks to skip unnecessary retries.
     def _is_daily_quota_exhausted(self, err_str: str) -> bool:
         err_lower = err_str.lower()
         return any(term in err_lower for term in [
             "tpd", "daily limit", "quota exceeded", "exceeded your current quota", "insufficient_quota"
         ])
 
+    # Calculates exponential backoff delay with random jitter to prevent API stampede effects.
+    # Prioritizes Retry-After headers if present in the error message payload.
     def _calculate_backoff_delay(self, attempt: int, err_str: str) -> float:
         """Calculates backoff delay using Retry-After parsing + Jittered Exponential Backoff."""
         parsed_wait = parse_retry_after_seconds(err_str)
@@ -113,6 +135,8 @@ class FallbackLLMProvider(BaseLLMProvider):
         jitter = random.uniform(0.1, 0.7)  # Jitter prevents simultaneous retry collisions
         return min(12.0, base_delay + jitter)
 
+    # Executes text generation with resilience retry loops and automatic multi-provider fallback.
+    # Iterates across providers and retry attempts to ensure continuous application uptime.
     def generate(
         self,
         prompt: str,
@@ -123,8 +147,12 @@ class FallbackLLMProvider(BaseLLMProvider):
         chain = self._get_provider_chain()
         errors = []
 
+        # Outer loop iterates through ordered LLM providers in the fallback chain.
+        # Handles seamless failover when primary provider fails or hits quota limits.
         for idx, (name, provider) in enumerate(chain):
             max_retries = 3
+            # Inner loop executes retry attempts for the current provider using exponential backoff.
+            # Handles transient failures and rate-limit retries before giving up on provider.
             for attempt in range(max_retries):
                 try:
                     result = provider.generate(
@@ -166,6 +194,8 @@ class FallbackLLMProvider(BaseLLMProvider):
         logger.error(f"All providers failed in FallbackLLMProvider. Errors: {self.last_error}")
         raise RuntimeError(f"All configured LLM providers failed. {self.last_error}")
 
+    # Executes structured JSON schema generation using resilient fallback provider chains.
+    # Validates final output against Pydantic model schema while retrying across providers.
     def generate_structured(
         self,
         prompt: str,
@@ -177,8 +207,12 @@ class FallbackLLMProvider(BaseLLMProvider):
         chain = self._get_provider_chain()
         errors = []
 
+        # Outer loop iterates through ordered LLM providers to perform structured generation.
+        # Manages failover between primary and secondary providers if schema generation fails.
         for idx, (name, provider) in enumerate(chain):
             max_retries = 3
+            # Inner loop executes retry attempts for structured generation on the selected provider.
+            # Applies exponential backoff for transient rate limits and quota handling.
             for attempt in range(max_retries):
                 try:
                     result = provider.generate_structured(

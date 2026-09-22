@@ -16,22 +16,32 @@ GROQ_MODEL_CANDIDATES = [
     "openai/gpt-oss-20b"
 ]
 
+# Groq API provider implementation of BaseLLMProvider.
+# Uses official Groq SDK with automatic candidate model fallbacks and JSON mode support.
 class GroqProvider(BaseLLMProvider):
     """Groq LLM Provider Implementation."""
 
+    # Initializes Groq provider settings with API keys and designated default model identifier.
+    # Sets up internal client state for lazy initialization.
     def __init__(self, api_key: Optional[str] = None, model_name: Optional[str] = None):
         self._api_key = api_key or settings.GROQ_API_KEY or os.getenv("GROQ_API_KEY")
         self._model_name = model_name or settings.GROQ_MODEL or "groq/compound-mini"
         self._client = None
 
+    # Property returning the canonical provider identifier 'groq'.
+    # Used for provider identification across system routing and fallbacks.
     @property
     def provider_name(self) -> str:
         return "groq"
 
+    # Property returning the active model name string currently being used.
+    # Keeps track of the model string selected after candidate resolution.
     @property
     def model_name(self) -> str:
         return self._model_name
 
+    # Lazy-loads and returns the official Groq client instance using configured API key.
+    # Throws explicit ValueError if no API key is supplied in configuration or environment.
     def _get_client(self):
         if not self._client:
             if not self._api_key:
@@ -40,13 +50,19 @@ class GroqProvider(BaseLLMProvider):
             self._client = Groq(api_key=self._api_key)
         return self._client
 
+    # Constructs an ordered list of candidate Groq model strings for fallback execution.
+    # Ensures alternate high-performance Groq models are tried if primary model fails.
     def _get_model_candidates(self) -> List[str]:
         candidates = [self._model_name]
+        # Iterate over preset Groq model names to build an un-duplicated candidate fallbacks list.
+        # Guarantees multiple fallback models are available for API calls.
         for m in GROQ_MODEL_CANDIDATES:
             if m not in candidates:
                 candidates.append(m)
         return candidates
 
+    # Generates unstructured text completions using Groq chat completions API endpoint.
+    # Iterates over candidate models to safely handle model deprecations or 404 errors.
     def generate(
         self,
         prompt: str,
@@ -61,6 +77,8 @@ class GroqProvider(BaseLLMProvider):
         messages.append({"role": "user", "content": prompt})
 
         last_err = None
+        # Loop through Groq model candidates attempting text completion calls until successful.
+        # Catches model-not-found exceptions and retries with subsequent models in list.
         for model in self._get_model_candidates():
             try:
                 response = client.chat.completions.create(
@@ -80,6 +98,8 @@ class GroqProvider(BaseLLMProvider):
                 raise e
         raise last_err
 
+    # Generates structured JSON responses validated against a target Pydantic schema class.
+    # Configures Groq json_object response format and parses output into Pydantic models.
     def generate_structured(
         self,
         prompt: str,
@@ -102,6 +122,8 @@ class GroqProvider(BaseLLMProvider):
         ]
 
         last_err = None
+        # Loop over candidate Groq models to execute structured JSON completions with schema checks.
+        # Retries alternative models if specific Groq model fails or encounters 404 errors.
         for model in self._get_model_candidates():
             try:
                 response = client.chat.completions.create(

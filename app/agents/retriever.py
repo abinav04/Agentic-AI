@@ -6,6 +6,8 @@ from app.tools.search_corpus import search_corpus_func
 
 logger = logging.getLogger(__name__)
 
+# Retriever Agent entry point that runs vector search queries using the corpus tool.
+# Collects, deduplicates, and compiles relevant context chunks for verification and answer synthesis.
 def run_retriever_agent(state: ResearchState) -> Dict[str, Any]:
     subqueries = state.get("subqueries", [])
     if not subqueries:
@@ -15,11 +17,15 @@ def run_retriever_agent(state: ResearchState) -> Dict[str, Any]:
     seen_ids = set()
     queries_run = []
 
+    # Loop over planned search subqueries to execute corpus retrieval operations.
+    # Runs hybrid vector search for each subquery and aggregates document matches.
     for subq in subqueries:
         if not subq.strip():
             continue
         queries_run.append(subq)
         results = search_corpus_func(query=subq, top_k=6)
+        # Inner loop to deduplicate chunks across multiple subquery vector search results.
+        # Guarantees each chunk ID appears at most once in the combined retrieved set.
         for chunk in results:
             cid = chunk.get("chunk_id")
             if cid and cid not in seen_ids:

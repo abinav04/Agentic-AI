@@ -12,6 +12,8 @@ REQUIRED_FIELDS = [
     "owner", "source_url", "published", "version", "text"
 ]
 
+# Function to read and validate the JSONL corpus file line-by-line.
+# It ensures all required fields are present and returns a list of cleaned chunk dictionaries.
 def load_corpus_jsonl(file_path: str = None) -> List[Dict[str, Any]]:
     path = file_path or settings.CORPUS_FILE_PATH
     if not os.path.exists(path):
@@ -19,6 +21,8 @@ def load_corpus_jsonl(file_path: str = None) -> List[Dict[str, Any]]:
 
     chunks = []
     with open(path, "r", encoding="utf-8") as f:
+        # Loop through each line in the corpus file to parse JSON records.
+        # It validates schema requirements and converts metadata types to strings.
         for idx, line in enumerate(f, 1):
             line = line.strip()
             if not line:
@@ -36,6 +40,8 @@ def load_corpus_jsonl(file_path: str = None) -> List[Dict[str, Any]]:
     logger.info(f"Loaded and validated {len(chunks)} chunks from {path}")
     return chunks
 
+# Function to orchestrate embedding ingestion into the ChromaDB vector database.
+# It checks if re-indexing is needed and pushes document chunks into vector storage.
 def run_ingestion(force_reindex: bool = False) -> int:
     current_count = chroma_store.count()
     if not force_reindex and current_count == 154:

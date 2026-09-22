@@ -33,6 +33,8 @@ VERDICT RULES:
    - DO NOT use LLM general knowledge or guess facts.
 """
 
+# Verifier Agent entry function that validates factual claims against retrieved documentation chunks.
+# Assesses evidence sufficiency, identifies conflicts across release dates, and generates claim verdicts.
 def run_verifier_agent(state: ResearchState, llm_provider: BaseLLMProvider) -> Dict[str, Any]:
     question = state["original_question"]
     raw_chunks = state.get("retrieved_chunks", [])
@@ -52,6 +54,8 @@ def run_verifier_agent(state: ResearchState, llm_provider: BaseLLMProvider) -> D
 
     # Format compressed chunks for verifier prompt
     formatted_chunks = []
+    # Loop over top reranked chunks to format text content and publication metadata into prompt strings.
+    # Prepares clean context representation for claim verification analysis by the LLM.
     for c in top_chunks:
         formatted_chunks.append(
             f"CHUNK ID: {c.get('chunk_id')}\n"

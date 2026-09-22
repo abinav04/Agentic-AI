@@ -30,6 +30,8 @@ RESPONSIBILITIES:
 5. DO NOT attempt to answer the user's question yourself. Your job is ONLY to plan retrieval.
 """
 
+# Router Agent entry function that analyzes user input and conversation history to formulate search plans.
+# Resolves coreferences/pronouns and generates targeted sub-queries for downstream vector retrieval.
 def run_router_agent(state: ResearchState, llm_provider: BaseLLMProvider) -> Dict[str, Any]:
     question = state["original_question"]
     history = state.get("messages", [])

@@ -7,6 +7,8 @@ from app.retrieval.reranker import rerank_chunks
 
 logger = logging.getLogger(__name__)
 
+# Core internal retrieval function that executes ChromaDB vector search and applies reranking.
+# Queries Chroma for candidate pools and returns top-k reranked context chunks.
 def search_corpus_func(query: str, top_k: int = 8, filters: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
     """Internal search corpus implementation."""
     raw_results = chroma_store.query(
@@ -17,6 +19,8 @@ def search_corpus_func(query: str, top_k: int = 8, filters: Optional[Dict[str, A
     reranked = rerank_chunks(query=query, chunks=raw_results, top_k=top_k)
     return reranked
 
+# LangChain tool wrapper function enabling agents to execute corpus vector search queries.
+# Parses optional JSON metadata filters and formats reranked chunk results as JSON strings.
 @tool
 def search_corpus(query: str, top_k: int = 8, filters: Optional[str] = None) -> str:
     """Search the Kestrel internal documentation corpus for relevant evidence chunks.

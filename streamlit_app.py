@@ -149,6 +149,8 @@ with st.sidebar:
 st.markdown('<div class="main-title">Kestrel Labs Multi-Agent Research Assistant</div>', unsafe_allow_html=True)
 st.markdown('<div class="sub-title">Corpus-Grounded Internal Technical Documentation Assistant with Dropdown Sources & Reasoning</div>', unsafe_allow_html=True)
 
+# Helper function to separate the main text answer from Option A citation blocks.
+# Splits content around the 'Sources:' label for rendering clean dropdown source views.
 def extract_clean_answer_and_sources(full_text: str):
     """Splits raw answer into clean text and sources block for dropdown rendering."""
     if not full_text:
@@ -161,6 +163,8 @@ def extract_clean_answer_and_sources(full_text: str):
         return clean_ans, sources_block
     return full_text.strip(), ""
 
+# Helper function to render assistant response messages in the Streamlit web interface.
+# Renders markdown answers, agent status badges, sources expanders, and plan dropdowns.
 def render_assistant_message(msg: dict):
     raw_content = msg.get("content", "")
     clean_answer, inline_sources = extract_clean_answer_and_sources(raw_content)
@@ -172,6 +176,8 @@ def render_assistant_message(msg: dict):
     steps = msg.get("agent_steps", [])
     if steps:
         st.markdown('<div class="agent-status-container">', unsafe_allow_html=True)
+        # Loop through completed agent step strings to render visual badge tags in UI.
+        # Displays progress checkmarks for Router, Retriever, Verifier, and Synthesizer.
         for step in steps:
             st.markdown(f'<span class="agent-step">{step}</span>', unsafe_allow_html=True)
         st.markdown('</div>', unsafe_allow_html=True)
@@ -195,6 +201,8 @@ def render_assistant_message(msg: dict):
                 st.markdown(citations_text)
             elif citations_list:
                 st.markdown("**Sources:**")
+                # Loop through citation list items to display document title and chunk ID.
+                # Renders clickable markdown list items inside the Streamlit source expander.
                 for c in citations_list:
                     st.markdown(f"- **{c.get('chunk_id')}** — {c.get('title')}")
 
@@ -209,6 +217,8 @@ def render_assistant_message(msg: dict):
             subq = planner_output.get("subqueries", [])
             if subq:
                 st.markdown("**Search Subqueries Run:**")
+                # Loop over executed subqueries to display bullet points in planner expander.
+                # Highlights decomposed retrieval steps for multi-hop or follow-up queries.
                 for sq in subq:
                     st.markdown(f"- `{sq}`")
 
@@ -219,6 +229,8 @@ def render_assistant_message(msg: dict):
                 st.markdown(f"**Conflict Resolution Details:** {conf_res}")
 
 # Display Chat History
+# Loop through stored session state chat messages to render historical user/assistant turns.
+# Re-renders past conversation elements upon UI interactions or page reloads.
 for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         if message["role"] == "user":

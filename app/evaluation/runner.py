@@ -16,6 +16,8 @@ from app.retrieval.ingestion import run_ingestion
 
 logger = logging.getLogger(__name__)
 
+# Main evaluation orchestration function that executes benchmark suites against test dataset questions.
+# Runs the RAG pipeline, computes recall and precision metrics, invokes LLM-as-a-Judge, and writes JSON summaries.
 def run_evaluation_suite(
     questions_file: str = "results/eval_questions.jsonl",
     results_file: str = "results/eval_results.jsonl",
@@ -34,6 +36,8 @@ def run_evaluation_suite(
 
     questions = []
     with open(questions_file, "r", encoding="utf-8") as f:
+        # Loop through JSONL benchmark dataset file to parse each test case record.
+        # Loads test questions, intent types, and ground truth document expectations.
         for line in f:
             if line.strip():
                 questions.append(json.loads(line.strip()))
@@ -47,6 +51,8 @@ def run_evaluation_suite(
     # Type breakdowns
     type_metrics: Dict[str, Dict[str, List[float]]] = {}
 
+    # Main evaluation loop processing each test question through the full RAG pipeline.
+    # Evaluates recall, citation accuracy, correctness, and LLM-as-a-Judge scoring.
     for idx, q_data in enumerate(questions, 1):
         q_id = q_data["question_id"]
         question = q_data["question"]
@@ -145,6 +151,8 @@ def run_evaluation_suite(
     # Save eval_results.jsonl
     os.makedirs(os.path.dirname(results_file), exist_ok=True)
     with open(results_file, "w", encoding="utf-8") as f:
+        # Loop through evaluated results to serialize individual benchmark records into JSONL output file.
+        # Saves detailed per-question scores, latencies, and citations.
         for res in eval_results:
             f.write(json.dumps(res) + "\n")
 
@@ -157,6 +165,8 @@ def run_evaluation_suite(
     avg_judge = round(sum(r["scores"]["llm_judge_score"] for r in eval_results) / len(eval_results), 4)
 
     breakdown_by_type = {}
+    # Loop through query intent types to calculate category-specific benchmark averages.
+    # Produces performance breakdowns for single-hop, multi-hop, follow-up, and conflicting queries.
     for t, m in type_metrics.items():
         breakdown_by_type[t] = {
             "count": len(m["recall"]),

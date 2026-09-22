@@ -22,6 +22,8 @@ STRICT GROUNDING RULES:
    - chunk_id — Title
 """
 
+# Synthesizer Agent entry function that generates grounded final answers using verified retrieved context.
+# Appends standardized citation blocks and handles insufficient evidence cases cleanly.
 def run_synthesizer_agent(state: ResearchState, llm_provider: BaseLLMProvider) -> Dict[str, Any]:
     question = state["original_question"]
     verdict = state.get("verifier_verdict", "supported")
@@ -45,6 +47,8 @@ def run_synthesizer_agent(state: ResearchState, llm_provider: BaseLLMProvider) -
 
     # Format compressed evidence chunks for prompt
     formatted_chunks = []
+    # Loop through top reranked chunks to construct evidence strings containing chunk IDs and titles.
+    # Formats evidence context cleanly for the final answer synthesis prompt.
     for c in top_chunks:
         formatted_chunks.append(
             f"[{c.get('chunk_id')}] (Title: {c.get('title')}, Date: {c.get('published')}): {c.get('text')}"

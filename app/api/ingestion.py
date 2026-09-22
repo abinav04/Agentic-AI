@@ -7,6 +7,8 @@ router = APIRouter()
 class IngestionRequest(BaseModel):
     force_reindex: bool = False
 
+# FastAPI endpoint handler to manually trigger corpus data ingestion into ChromaDB.
+# Reads corpus records, generates embeddings, and returns total document chunks indexed.
 @router.post("/ingest")
 def trigger_ingestion(request: IngestionRequest = IngestionRequest()):
     """Triggers corpus ingestion into Chroma DB."""

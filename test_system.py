@@ -8,6 +8,8 @@ if hasattr(sys.stdout, 'reconfigure'):
 
 BASE_URL = "http://localhost:8000"
 
+# Test function validating system health status and vector store document count.
+# Sends HTTP GET request to /api/health and asserts response status 200 and chunk count 154.
 def test_health_check():
     print("\n--- 1. Testing GET /api/health Endpoint ---")
     url = f"{BASE_URL}/api/health"
@@ -25,6 +27,8 @@ def test_health_check():
         print(f"[FAIL] Health Check Error: {e}")
         return False
 
+# Test helper function sending POST request queries to the /api/chat endpoint.
+# Asserts valid answer payloads, outputs provider/latency stats, and logs execution steps.
 def test_chat_query(name: str, question: str, expected_type: str, conversation_id: str = "test_conv", messages: list = None):
     print(f"\n--- Testing {name} ({expected_type}) ---")
     print(f"Question: '{question}'")
@@ -50,6 +54,8 @@ def test_chat_query(name: str, question: str, expected_type: str, conversation_i
         print(f"Verifier Verdict: {data.get('verifier_verdict')}")
         print(f"Latency: {data.get('latency_seconds')}s")
         print("Agent Steps Executed:")
+        # Loop over returned agent step descriptions to print execution trace checkmarks.
+        # Encodes unicode step symbols safely for Windows terminal output compatibility.
         for step in data.get("agent_steps", []):
             safe_step = step.encode('ascii', errors='replace').decode('ascii')
             print(f"  {safe_step}")
@@ -70,6 +76,8 @@ def test_chat_query(name: str, question: str, expected_type: str, conversation_i
         print(f"[FAIL] {name} Error: {e}")
         return False
 
+# Main test runner executing health checks, single-hop, multi-hop, conflicting, and follow-up test cases.
+# Prints comprehensive pass/fail summary results for backend API verification.
 def run_all_tests():
     print("============================================================")
     print("      Kestrel Multi-Agent Research Assistant Test Suite     ")

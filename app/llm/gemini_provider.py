@@ -14,23 +14,33 @@ GEMINI_MODEL_CANDIDATES = [
     "gemini-flash-latest"
 ]
 
+# Gemini API provider implementation of BaseLLMProvider.
+# Supports google-genai SDK with automatic model fallback for robust AI generations.
 class GeminiProvider(BaseLLMProvider):
     """Gemini LLM Provider Implementation."""
 
+    # Initializes Gemini client configuration using environment API key and default model settings.
+    # Prepares internal flags for detecting whether google-genai or legacy google-generativeai SDK is used.
     def __init__(self, api_key: Optional[str] = None, model_name: Optional[str] = None):
         self._api_key = api_key or settings.GEMINI_API_KEY or os.getenv("GEMINI_API_KEY")
         self._model_name = model_name or settings.GEMINI_MODEL or "gemini-3.6-flash"
         self._client = None
         self._is_new_sdk = True
 
+    # Property returning the canonical provider name 'gemini'.
+    # Used by LLM routing and fallback manager to identify this provider.
     @property
     def provider_name(self) -> str:
         return "gemini"
 
+    # Property returning the active model name string currently in use.
+    # Tracks active model version across candidate fallback attempts.
     @property
     def model_name(self) -> str:
         return self._model_name
 
+    # Lazy-initializes and returns the Google GenAI SDK client instance.
+    # Handles dynamic SDK imports for both google-genai and legacy google-generativeai modules.
     def _get_client(self):
         if not self._client:
             if not self._api_key:
@@ -46,13 +56,19 @@ class GeminiProvider(BaseLLMProvider):
                 self._is_new_sdk = False
         return self._client
 
+    # Constructs an ordered list of fallback candidate model strings.
+    # Ensures fallback models are tried if primary requested model version throws 404 errors.
     def _get_model_candidates(self) -> List[str]:
         candidates = [self._model_name]
+        # Iterate over predefined candidate Gemini models to append non-duplicate fallback names.
+        # Guarantees multiple fallback model choices are available for API requests.
         for m in GEMINI_MODEL_CANDIDATES:
             if m not in candidates:
                 candidates.append(m)
         return candidates
 
+    # Generates text completions using Google Gemini models with automatic candidate model retries.
+    # Handles prompt construction, SDK parameter mappings, and model fallback logic.
     def generate(
         self,
         prompt: str,
@@ -64,6 +80,8 @@ class GeminiProvider(BaseLLMProvider):
         full_prompt = f"{system_prompt}\n\n{prompt}" if system_prompt else prompt
 
         last_err = None
+        # Loop through model candidate names to attempt text generation until success.
+        # Catches model-not-found errors and seamlessly falls back to alternative Gemini models.
         for model in self._get_model_candidates():
             try:
                 if self._is_new_sdk:
@@ -96,6 +114,8 @@ class GeminiProvider(BaseLLMProvider):
                 raise e
         raise last_err
 
+    # Generates structured JSON responses conforming strictly to a target Pydantic schema class.
+    # Injects schema instructions into system prompt and parses/validates the resulting JSON.
     def generate_structured(
         self,
         prompt: str,

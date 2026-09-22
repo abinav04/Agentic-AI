@@ -4,6 +4,8 @@ import os
 
 router = APIRouter()
 
+# FastAPI endpoint handler to fetch and serve cached evaluation suite metric summaries.
+# Reads results/metrics_summary.json and returns aggregate accuracy scores and type breakdowns.
 @router.get("/evaluate/results")
 def get_evaluation_results():
     """Retrieves previous evaluation benchmark results if present."""

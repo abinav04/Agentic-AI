@@ -8,6 +8,8 @@ logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 
+# Command-line entry point for running the complete benchmark evaluation suite.
+# Parses provider arguments, invokes run_evaluation_suite, and prints benchmark score reports.
 def main():
     parser = argparse.ArgumentParser(description="Run Evaluation Suite for Kestrel Multi-Agent Research Assistant")
     parser.add_argument("--provider", type=str, default="groq", choices=["groq", "gemini"], help="Primary LLM provider")

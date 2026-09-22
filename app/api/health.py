@@ -4,6 +4,8 @@ from app.config import settings
 
 router = APIRouter()
 
+# FastAPI endpoint handler for system health and readiness checks.
+# Queries ChromaDB document counts and reports active LLM provider configurations.
 @router.get("/health")
 def get_health_status():
     """Health check endpoint returning system status and vector DB chunk count."""

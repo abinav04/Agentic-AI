@@ -12,6 +12,8 @@ if sys.platform == "win32":
     except AttributeError:
         pass
 
+# Helper function to check if a network port is occupied and terminate any occupying process.
+# Ensures clean startup of FastAPI (8000) and Streamlit (8501) without port collision errors.
 def free_port(port: int):
     """Frees specified port if it is currently occupied by a stale process."""
     try:
@@ -27,6 +29,8 @@ def free_port(port: int):
     except Exception:
         pass
 
+# Main orchestration function launching both the FastAPI backend and Streamlit UI frontend.
+# Monitors child process states and handles graceful termination upon keyboard interrupts.
 def main():
     print("=" * 60)
     print(" Kestrel Labs Multi-Agent Assistant - One-Command Launcher")
@@ -65,8 +69,12 @@ def main():
         print("=" * 60 + "\n")
 
         # Monitor processes
+        # Continuous monitoring loop checking for unexpected exit codes from child services.
+        # Raises KeyboardInterrupt to initiate shutdown if backend or frontend crashes.
         while True:
             time.sleep(1)
+            # Loop over active process handles to inspect poll status and exit codes.
+            # Triggers service health alerts if process terminates prematurely.
             for name, proc in processes:
                 poll = proc.poll()
                 if poll is not None:
@@ -75,6 +83,8 @@ def main():
 
     except KeyboardInterrupt:
         print("\nShutting down backend and frontend services...")
+        # Loop through child subprocesses to send termination signals and kill process trees cleanly.
+        # Ensures port listener processes are completely terminated before script exit.
         for name, proc in processes:
             if proc.poll() is None:
                 print(f"  Stopping {name}...")

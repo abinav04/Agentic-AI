@@ -28,6 +28,8 @@ SPECIAL CASES:
 - For conflicting evidence, the model MUST acknowledge the conflict and explain the date-based resolution.
 """
 
+# LLM-as-a-Judge evaluation entry point function that evaluates generated answers against ground truth.
+# Scores correctness, faithfulness, relevance, and citation quality on a 1.0 to 5.0 benchmark scale.
 def run_llm_judge(
     question: str,
     answer: str,

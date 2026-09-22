@@ -10,15 +10,21 @@ logger = logging.getLogger(__name__)
 
 COLLECTION_NAME = "kestrel_corpus"
 
+# Class to encapsulate ChromaDB client operations and vector collection management.
+# Provides low-level interfaces for adding documents, querying vectors, and checking counts.
 class ChromaStoreManager:
     """Manages persistent Chroma vector store."""
 
+    # Initializes the persistent Chroma DB client at the configured directory path.
+    # Prepares lazy loading container for the vector collection instance.
     def __init__(self, persist_directory: Optional[str] = None):
         self.persist_directory = persist_directory or settings.CHROMA_PERSIST_DIRECTORY
         os.makedirs(self.persist_directory, exist_ok=True)
         self.client = chromadb.PersistentClient(path=self.persist_directory)
         self._collection = None
 
+    # Lazy-loads or creates the target Chroma vector collection using cosine similarity.
+    # Attaches the custom embedding function for automated text vectorization.
     def get_collection(self):
         if self._collection is None:
             self._collection = self.client.get_or_create_collection(
@@ -28,15 +34,21 @@ class ChromaStoreManager:
             )
         return self._collection
 
+    # Returns the total count of document chunks currently indexed in the collection.
+    # Used for status verification and skipping redundant ingestion runs.
     def count(self) -> int:
         collection = self.get_collection()
         return collection.count()
 
+    # Batch inserts document text chunks and associated metadata into the vector database.
+    # Processes chunks in small batches to optimize memory usage on constrained environments.
     def add_chunks(self, chunks: List[Dict[str, Any]]):
         collection = self.get_collection()
         ids = [chunk["chunk_id"] for chunk in chunks]
         documents = [chunk["text"] for chunk in chunks]
         metadatas = []
+        # Iterate over raw chunk dicts to format key metadata attributes into clean dictionaries.
+        # Prepares structured metadata records for storage alongside vector embeddings.
         for chunk in chunks:
             metadatas.append({
                 "chunk_id": chunk["chunk_id"],
@@ -51,6 +63,8 @@ class ChromaStoreManager:
 
         # Add in small batches of 16 to keep memory usage under 150MB on 512MB RAM cloud tiers
         batch_size = 16
+        # Loop through chunk data in fixed batch sizes to submit entries to ChromaDB safely.
+        # Prevents memory spikes during heavy vector generation and bulk indexing operations.
         for i in range(0, len(chunks), batch_size):
             collection.add(
                 ids=ids[i:i+batch_size],
@@ -59,6 +73,8 @@ class ChromaStoreManager:
             )
         logger.info(f"Successfully indexed {len(chunks)} chunks into Chroma collection '{COLLECTION_NAME}'")
 
+    # Queries vector collection using similarity search with optional metadata filter constraints.
+    # Returns ranked matching document chunks with calculated cosine similarity scores.
     def query(
         self,
         query_text: str,
@@ -79,6 +95,8 @@ class ChromaStoreManager:
             ids = results["ids"][0] if results.get("ids") else []
             distances = results["distances"][0] if results.get("distances") else []
 
+            # Iterate through raw Chroma query output arrays to assemble structured chunk dictionaries.
+            # Converts raw cosine distance metrics into normalized similarity scores.
             for i in range(len(docs)):
                 chunk_meta = metas[i] if i < len(metas) else {}
                 dist = distances[i] if i < len(distances) else 0.0

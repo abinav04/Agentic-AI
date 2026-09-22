@@ -193,9 +193,13 @@ EVAL_QUESTIONS = [
     }
 ]
 
+# Function to generate the JSONL benchmark test dataset file containing 20 curated test cases.
+# Writes single-hop, multi-hop, conflicting, unsupported, and follow-up query objects to output path.
 def generate_questions_file(output_path: str = "results/eval_questions.jsonl"):
     os.makedirs(os.path.dirname(output_path), exist_ok=True)
     with open(output_path, "w", encoding="utf-8") as f:
+        # Loop through static EVAL_QUESTIONS dataset list to write each benchmark test case line by line.
+        # Outputs formatted JSON records for evaluation suite execution.
         for q in EVAL_QUESTIONS:
             f.write(json.dumps(q) + "\n")
     print(f"Successfully generated {len(EVAL_QUESTIONS)} evaluation questions in {output_path}")

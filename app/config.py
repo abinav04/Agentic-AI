@@ -2,6 +2,8 @@ import os
 from typing import Optional
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+# Pydantic BaseSettings class loading configuration parameters from environment variables and .env file.
+# Configures API keys, LLM models, vector store paths, LangSmith tracing, and server ports.
 class Settings(BaseSettings):
     # LLM Keys
     GROQ_API_KEY: Optional[str] = None

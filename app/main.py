@@ -14,6 +14,8 @@ logger = logging.getLogger(__name__)
 
 import asyncio
 
+# Async context manager handling FastAPI application startup and shutdown lifecycle events.
+# Triggers background corpus vector ingestion task upon application server startup.
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     logger.info("Initializing Kestrel Multi-Agent Research Assistant Backend...")

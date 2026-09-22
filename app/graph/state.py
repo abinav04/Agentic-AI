@@ -1,5 +1,7 @@
 from typing import List, Dict, Any, Optional, TypedDict
 
+# TypedDict class defining state shared across LangGraph agent nodes.
+# Stores conversation context, router subqueries, retrieved chunks, verifier verdicts, and final answers.
 class ResearchState(TypedDict):
     """LangGraph State definition for Kestrel Multi-Agent Research Assistant."""
 

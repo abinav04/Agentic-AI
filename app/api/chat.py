@@ -30,6 +30,8 @@ class ChatResponse(BaseModel):
     verifier_results: Dict[str, Any]
     errors: List[str]
 
+# FastAPI endpoint handler for processing interactive user chat queries.
+# Triggers multi-agent pipeline execution and returns detailed answer payloads with citations and metadata.
 @router.post("/chat", response_model=ChatResponse)
 def execute_chat(request: ChatRequest):
     """Executes 4-agent research workflow on user question."""
